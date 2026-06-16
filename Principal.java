@@ -1,8 +1,10 @@
+import java.util.Scanner;
+
 /**
  * Classe principal do Diario Musical.
  *
- * <p>Responsavel pelo fluxo de execucao do programa: exibe o menu,
- * captura a opcao do usuario e delega as operacoes ao objeto Diario.</p>
+ * <p>Responsavel pelo fluxo de execucao: exibe o menu, captura a opcao
+ * do usuario e delega as operacoes ao objeto Diario.</p>
  */
 public class Principal {
 
@@ -37,17 +39,14 @@ public class Principal {
                 }
 
             } catch (MusicaJaRegistradaException e) {
-                // Excecao customizada: regra de negocio violada
                 System.out.println("\n" + e.getMessage());
                 opcao = -1;
 
             } catch (NumberFormatException e) {
-                // Entrada numerica invalida
                 System.out.println("\nValor invalido. Digite um numero.");
                 opcao = -1;
 
             } catch (Exception e) {
-                // Demais erros (ex: falha no CSV)
                 System.out.println("\nErro: " + e.getMessage());
                 opcao = -1;
             }
@@ -61,7 +60,7 @@ public class Principal {
      * @return inteiro correspondente a opcao escolhida
      */
     private static int menu() {
-        java.util.Scanner sc = new java.util.Scanner(System.in);
+        Scanner sc = new Scanner(System.in);
         System.out.println("\n=== DIARIO MUSICAL ===");
         System.out.println("1. Cadastrar musica do dia");
         System.out.println("2. Listar musicas");

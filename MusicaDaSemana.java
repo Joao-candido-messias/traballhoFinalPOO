@@ -4,9 +4,8 @@ import java.time.LocalDate;
  * Subclasse concreta de Musica que representa a musica escolhida
  * como trilha sonora de um dia especifico.
  *
- * <p>MusicaDaSemana E UMA Musica — herda todos os seus atributos
- * e comportamentos, acrescentando a logica de exibicao especifica
- * para o contexto do diario semanal.</p>
+ * <p>MusicaDaSemana E UMA Musica. Herda seus atributos e implementa
+ * o contrato da interface Registravel.</p>
  */
 public class MusicaDaSemana extends Musica implements Registravel {
 
@@ -34,8 +33,7 @@ public class MusicaDaSemana extends Musica implements Registravel {
     /**
      * Exibe as informacoes da musica do dia no terminal.
      *
-     * <p>Sobrescreve o metodo abstrato da superclasse com
-     * um formato voltado para o contexto semanal.</p>
+     * <p>Sobrescreve o metodo abstrato da superclasse.</p>
      */
     @Override
     public void exibir() {
@@ -45,8 +43,6 @@ public class MusicaDaSemana extends Musica implements Registravel {
 
     /**
      * Implementacao do contrato da interface Registravel.
-     *
-     * <p>Exibe uma confirmacao de que esta musica foi registrada no diario.</p>
      *
      * @throws Exception se ocorrer qualquer erro durante o registro
      */
@@ -64,6 +60,4 @@ public class MusicaDaSemana extends Musica implements Registravel {
     public String toString() {
         return nomeFaixa + " - " + artista + " (" + genero + ", " + anoLancamento + ") [" + data + "]";
     }
-} {
-    
 }

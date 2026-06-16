@@ -1,12 +1,12 @@
-public import java.io.*;
+import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
 
 /**
  * Gerencia o diario musical: cadastro, listagem e ranking semanal.
  *
- * <p>Trabalha com a superclasse Musica em suas colecoes (polimorfismo de inclusao),
- * instanciando objetos do tipo MusicaDaSemana no momento do cadastro.</p>
+ * <p>Usa o tipo da superclasse Musica nas colecoes (polimorfismo de inclusao)
+ * e instancia MusicaDaSemana no momento do cadastro.</p>
  */
 public class Diario {
 
@@ -16,7 +16,7 @@ public class Diario {
     /**
      * Cadastra a musica do dia via terminal e salva no CSV.
      *
-     * <p>Impede mais de um registro por dia lancando MusicaJaRegistradaException.</p>
+     * <p>Lanca MusicaJaRegistradaException se ja houver registro para hoje.</p>
      *
      * @throws MusicaJaRegistradaException se ja houver registro para a data atual
      * @throws IOException                 se ocorrer erro de leitura ou escrita no CSV
@@ -24,10 +24,8 @@ public class Diario {
      */
     public void cadastrar() throws MusicaJaRegistradaException, IOException {
         Scanner sc = new Scanner(System.in);
-
         LocalDate hoje = LocalDate.now();
 
-        // Verifica se ja existe registro para hoje
         List<Musica> lista = lerCSV();
         for (Musica m : lista) {
             if (m.getData().equals(hoje)) {
@@ -51,11 +49,10 @@ public class Diario {
         System.out.print("Ano de lancamento: ");
         int ano = Integer.parseInt(sc.nextLine().trim());
 
-        // Instancia a subclasse concreta
         MusicaDaSemana m = new MusicaDaSemana(nome, artista, album, genero, ano, hoje);
 
         try {
-            m.registrar(); // contrato da interface Registravel
+            m.registrar();
         } catch (Exception e) {
             System.out.println("Aviso ao registrar: " + e.getMessage());
         }
@@ -67,13 +64,11 @@ public class Diario {
     /**
      * Le o CSV e exibe todas as musicas cadastradas.
      *
-     * <p>Usa o tipo da superclasse Musica na colecao e chama exibir()
-     * polimorficamente para cada elemento.</p>
+     * <p>Chama exibir() polimorficamente para cada elemento da lista.</p>
      *
      * @throws IOException se ocorrer erro de leitura no CSV
      */
     public void listar() throws IOException {
-        // Colecao do tipo superclasse — polimorfismo de inclusao
         List<Musica> lista = lerCSV();
 
         if (lista.isEmpty()) {
@@ -85,17 +80,16 @@ public class Diario {
         int i = 1;
         for (Musica m : lista) {
             System.out.print(i + ".");
-            m.exibir(); // chamada polimorfica
+            m.exibir();
             i++;
         }
         System.out.println("Total: " + lista.size() + " musica(s).");
     }
 
     /**
-     * Gera e exibe o ranking das musicas registradas nos ultimos 7 dias corridos.
+     * Gera e exibe o ranking das musicas dos ultimos 7 dias corridos.
      *
-     * <p>Considera a janela de hoje menos 6 dias ate hoje (inclusive).
-     * Exibe: lista do periodo, repeticoes, artista e genero mais presentes.</p>
+     * <p>Exibe: lista do periodo, repeticoes, artista e genero mais presentes.</p>
      *
      * @throws IOException se ocorrer erro de leitura no CSV
      */
@@ -107,7 +101,6 @@ public class Diario {
             return;
         }
 
-        // Filtra musicas dos ultimos 7 dias
         LocalDate hoje = LocalDate.now();
         LocalDate seteDiasAtras = hoje.minusDays(6);
         List<Musica> semana = new ArrayList<>();
@@ -125,13 +118,12 @@ public class Diario {
 
         System.out.println("\n=== RANKING SEMANAL ===");
 
-        // Lista as musicas usando exibir() polimorficamente
         System.out.println("\nMusicas da semana:");
         for (Musica m : semana) {
             m.exibir();
         }
 
-        // Contagem de repeticoes por faixa
+        // Repeticoes por faixa
         Map<String, Integer> contagemFaixa = new HashMap<>();
         for (Musica m : semana) {
             String chave = m.getNomeFaixa();
@@ -186,8 +178,6 @@ public class Diario {
     /**
      * Salva uma musica no CSV em modo de adicao (append).
      *
-     * <p>Cria o arquivo com cabecalho se nao existir.</p>
-     *
      * @param m objeto Musica a ser salvo
      * @throws IOException se ocorrer erro de escrita
      */
@@ -203,11 +193,9 @@ public class Diario {
     }
 
     /**
-     * Le o CSV e retorna uma lista de Musica (instancias de MusicaDaSemana).
+     * Le o CSV e retorna lista de Musica (instancias de MusicaDaSemana).
      *
-     * <p>Ignora o cabecalho, linhas em branco e linhas com dados invalidos.</p>
-     *
-     * @return lista de objetos Musica lidos do arquivo; vazia se o arquivo nao existir
+     * @return lista de objetos Musica; vazia se o arquivo nao existir
      * @throws IOException se ocorrer erro de leitura
      */
     private List<Musica> lerCSV() throws IOException {
@@ -216,7 +204,8 @@ public class Diario {
 
         if (!arquivo.exists()) return lista;
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(arquivo), "UTF-8"))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(new FileInputStream(arquivo), "UTF-8"))) {
             String linha;
             boolean primeiraLinha = true;
 
@@ -236,7 +225,6 @@ public class Diario {
                     int ano        = Integer.parseInt(campos[4].trim());
                     LocalDate data = LocalDate.parse(campos[5].trim());
 
-                    // Instancia MusicaDaSemana, armazenada como Musica (polimorfismo)
                     lista.add(new MusicaDaSemana(nome, artista, album, genero, ano, data));
                 } catch (Exception e) {
                     // linha invalida, ignora
@@ -266,6 +254,4 @@ public class Diario {
 
         return maior;
     }
-} {
-    
 }
