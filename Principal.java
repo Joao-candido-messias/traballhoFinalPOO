@@ -30,6 +30,10 @@ public class Principal {
                         diario.rankingSemanal();
                         break;
 
+                    case 4:
+                        diario.rankingMensal();
+                        break;
+
                     case 0:
                         System.out.println("\nPrograma encerrado.");
                         break;
@@ -50,7 +54,6 @@ public class Principal {
                 System.out.println("\nErro: " + e.getMessage());
                 opcao = -1;
             }
-
         } while (opcao != 0);
     }
 
@@ -65,6 +68,7 @@ public class Principal {
         System.out.println("1. Cadastrar musica do dia");
         System.out.println("2. Listar musicas");
         System.out.println("3. Ranking semanal");
+        System.out.println("4. Ranking mensal");
         System.out.println("0. Sair");
         System.out.print("Opcao: ");
         return Integer.parseInt(sc.nextLine().trim());

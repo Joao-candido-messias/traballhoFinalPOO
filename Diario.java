@@ -3,7 +3,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 /**
- * Gerencia o diario musical: cadastro, listagem e ranking semanal.
+ * Gerencia o diario musical: cadastro, listagem, ranking semanal e ranking mensal.
  *
  * <p>Usa o tipo da superclasse Musica nas colecoes (polimorfismo de inclusao)
  * e instancia MusicaDaSemana no momento do cadastro.</p>
@@ -172,6 +172,83 @@ public class Diario {
         }
         String generoTop = maiorContagem(contagemGenero);
         System.out.println("Genero da semana:  " + generoTop
+                + " (" + contagemGenero.get(generoTop) + " ocorrencia(s))");
+    }
+
+    /**
+     * Gera e exibe o ranking das musicas do mes corrente.
+     *
+     * <p>Exibe: lista do periodo, repeticoes, artista e genero mais presentes.</p>
+     *
+     * @throws IOException se ocorrer erro de leitura no CSV
+     */
+    public void rankingMensal() throws IOException {
+        List<Musica> todas = lerCSV();
+
+        if (todas.isEmpty()) {
+            System.out.println("\nNenhuma musica cadastrada para gerar ranking.");
+            return;
+        }
+
+        LocalDate hoje = LocalDate.now();
+        LocalDate inicioMes = hoje.withDayOfMonth(1);
+        List<Musica> mes = new ArrayList<>();
+
+        for (Musica m : todas) {
+            if (!m.getData().isBefore(inicioMes) && !m.getData().isAfter(hoje)) {
+                mes.add(m);
+            }
+        }
+
+        if (mes.isEmpty()) {
+            System.out.println("\nNenhuma musica registrada no mes de " + hoje.getMonth() + ".");
+            return;
+        }
+
+        System.out.println("\n=== RANKING MENSAL - " + hoje.getMonth() + " " + hoje.getYear() + " ===");
+
+        System.out.println("\nMusicas do mes:");
+        for (Musica m : mes) {
+            m.exibir();
+        }
+
+        // Repeticoes por faixa
+        Map<String, Integer> contagemFaixa = new HashMap<>();
+        for (Musica m : mes) {
+            String chave = m.getNomeFaixa();
+            contagemFaixa.put(chave, contagemFaixa.getOrDefault(chave, 0) + 1);
+        }
+
+        System.out.println("\nRepeticoes:");
+        boolean houveRepeticao = false;
+        for (String faixa : contagemFaixa.keySet()) {
+            if (contagemFaixa.get(faixa) > 1) {
+                System.out.println("  - \"" + faixa + "\" apareceu " + contagemFaixa.get(faixa) + "x");
+                houveRepeticao = true;
+            }
+        }
+        if (!houveRepeticao) {
+            System.out.println("  Nenhuma musica repetida este mes.");
+        }
+
+        // Artista mais presente
+        Map<String, Integer> contagemArtista = new HashMap<>();
+        for (Musica m : mes) {
+            String chave = m.getArtista();
+            contagemArtista.put(chave, contagemArtista.getOrDefault(chave, 0) + 1);
+        }
+        String artistaTop = maiorContagem(contagemArtista);
+        System.out.println("\nArtista do mes: " + artistaTop
+                + " (" + contagemArtista.get(artistaTop) + " musica(s))");
+
+        // Genero mais presente
+        Map<String, Integer> contagemGenero = new HashMap<>();
+        for (Musica m : mes) {
+            String chave = m.getGenero();
+            contagemGenero.put(chave, contagemGenero.getOrDefault(chave, 0) + 1);
+        }
+        String generoTop = maiorContagem(contagemGenero);
+        System.out.println("Genero do mes:  " + generoTop
                 + " (" + contagemGenero.get(generoTop) + " ocorrencia(s))");
     }
 
