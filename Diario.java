@@ -1,0 +1,271 @@
+public import java.io.*;
+import java.time.LocalDate;
+import java.util.*;
+
+/**
+ * Gerencia o diario musical: cadastro, listagem e ranking semanal.
+ *
+ * <p>Trabalha com a superclasse Musica em suas colecoes (polimorfismo de inclusao),
+ * instanciando objetos do tipo MusicaDaSemana no momento do cadastro.</p>
+ */
+public class Diario {
+
+    private static final String ARQUIVO_CSV = "musicas.csv";
+    private static final String CABECALHO = "Nome da Faixa,Artista,Álbum,Gênero,Ano de Lançamento,Data";
+
+    /**
+     * Cadastra a musica do dia via terminal e salva no CSV.
+     *
+     * <p>Impede mais de um registro por dia lancando MusicaJaRegistradaException.</p>
+     *
+     * @throws MusicaJaRegistradaException se ja houver registro para a data atual
+     * @throws IOException                 se ocorrer erro de leitura ou escrita no CSV
+     * @throws NumberFormatException       se o ano digitado nao for numerico
+     */
+    public void cadastrar() throws MusicaJaRegistradaException, IOException {
+        Scanner sc = new Scanner(System.in);
+
+        LocalDate hoje = LocalDate.now();
+
+        // Verifica se ja existe registro para hoje
+        List<Musica> lista = lerCSV();
+        for (Musica m : lista) {
+            if (m.getData().equals(hoje)) {
+                throw new MusicaJaRegistradaException(
+                        "Voce ja registrou a musica do dia " + hoje + ". Volte amanha!");
+            }
+        }
+
+        System.out.print("\nNome da faixa: ");
+        String nome = sc.nextLine().trim();
+
+        System.out.print("Artista: ");
+        String artista = sc.nextLine().trim();
+
+        System.out.print("Album: ");
+        String album = sc.nextLine().trim();
+
+        System.out.print("Genero: ");
+        String genero = sc.nextLine().trim();
+
+        System.out.print("Ano de lancamento: ");
+        int ano = Integer.parseInt(sc.nextLine().trim());
+
+        // Instancia a subclasse concreta
+        MusicaDaSemana m = new MusicaDaSemana(nome, artista, album, genero, ano, hoje);
+
+        try {
+            m.registrar(); // contrato da interface Registravel
+        } catch (Exception e) {
+            System.out.println("Aviso ao registrar: " + e.getMessage());
+        }
+
+        salvarNoCSV(m);
+        System.out.println("Musica registrada: " + nome + " em " + hoje);
+    }
+
+    /**
+     * Le o CSV e exibe todas as musicas cadastradas.
+     *
+     * <p>Usa o tipo da superclasse Musica na colecao e chama exibir()
+     * polimorficamente para cada elemento.</p>
+     *
+     * @throws IOException se ocorrer erro de leitura no CSV
+     */
+    public void listar() throws IOException {
+        // Colecao do tipo superclasse — polimorfismo de inclusao
+        List<Musica> lista = lerCSV();
+
+        if (lista.isEmpty()) {
+            System.out.println("\nNenhuma musica cadastrada ainda.");
+            return;
+        }
+
+        System.out.println("\n=== HISTORICO MUSICAL ===");
+        int i = 1;
+        for (Musica m : lista) {
+            System.out.print(i + ".");
+            m.exibir(); // chamada polimorfica
+            i++;
+        }
+        System.out.println("Total: " + lista.size() + " musica(s).");
+    }
+
+    /**
+     * Gera e exibe o ranking das musicas registradas nos ultimos 7 dias corridos.
+     *
+     * <p>Considera a janela de hoje menos 6 dias ate hoje (inclusive).
+     * Exibe: lista do periodo, repeticoes, artista e genero mais presentes.</p>
+     *
+     * @throws IOException se ocorrer erro de leitura no CSV
+     */
+    public void rankingSemanal() throws IOException {
+        List<Musica> todas = lerCSV();
+
+        if (todas.isEmpty()) {
+            System.out.println("\nNenhuma musica cadastrada para gerar ranking.");
+            return;
+        }
+
+        // Filtra musicas dos ultimos 7 dias
+        LocalDate hoje = LocalDate.now();
+        LocalDate seteDiasAtras = hoje.minusDays(6);
+        List<Musica> semana = new ArrayList<>();
+
+        for (Musica m : todas) {
+            if (!m.getData().isBefore(seteDiasAtras) && !m.getData().isAfter(hoje)) {
+                semana.add(m);
+            }
+        }
+
+        if (semana.isEmpty()) {
+            System.out.println("\nNenhuma musica registrada nos ultimos 7 dias.");
+            return;
+        }
+
+        System.out.println("\n=== RANKING SEMANAL ===");
+
+        // Lista as musicas usando exibir() polimorficamente
+        System.out.println("\nMusicas da semana:");
+        for (Musica m : semana) {
+            m.exibir();
+        }
+
+        // Contagem de repeticoes por faixa
+        Map<String, Integer> contagemFaixa = new HashMap<>();
+        for (Musica m : semana) {
+            String chave = m.getNomeFaixa();
+            if (contagemFaixa.containsKey(chave)) {
+                contagemFaixa.put(chave, contagemFaixa.get(chave) + 1);
+            } else {
+                contagemFaixa.put(chave, 1);
+            }
+        }
+
+        System.out.println("\nRepeticoes:");
+        boolean houveRepeticao = false;
+        for (String faixa : contagemFaixa.keySet()) {
+            if (contagemFaixa.get(faixa) > 1) {
+                System.out.println("  - \"" + faixa + "\" apareceu " + contagemFaixa.get(faixa) + "x");
+                houveRepeticao = true;
+            }
+        }
+        if (!houveRepeticao) {
+            System.out.println("  Nenhuma musica repetida esta semana.");
+        }
+
+        // Artista mais presente
+        Map<String, Integer> contagemArtista = new HashMap<>();
+        for (Musica m : semana) {
+            String chave = m.getArtista();
+            if (contagemArtista.containsKey(chave)) {
+                contagemArtista.put(chave, contagemArtista.get(chave) + 1);
+            } else {
+                contagemArtista.put(chave, 1);
+            }
+        }
+        String artistaTop = maiorContagem(contagemArtista);
+        System.out.println("\nArtista da semana: " + artistaTop
+                + " (" + contagemArtista.get(artistaTop) + " musica(s))");
+
+        // Genero mais presente
+        Map<String, Integer> contagemGenero = new HashMap<>();
+        for (Musica m : semana) {
+            String chave = m.getGenero();
+            if (contagemGenero.containsKey(chave)) {
+                contagemGenero.put(chave, contagemGenero.get(chave) + 1);
+            } else {
+                contagemGenero.put(chave, 1);
+            }
+        }
+        String generoTop = maiorContagem(contagemGenero);
+        System.out.println("Genero da semana:  " + generoTop
+                + " (" + contagemGenero.get(generoTop) + " ocorrencia(s))");
+    }
+
+    /**
+     * Salva uma musica no CSV em modo de adicao (append).
+     *
+     * <p>Cria o arquivo com cabecalho se nao existir.</p>
+     *
+     * @param m objeto Musica a ser salvo
+     * @throws IOException se ocorrer erro de escrita
+     */
+    private void salvarNoCSV(Musica m) throws IOException {
+        File arquivo = new File(ARQUIVO_CSV);
+        boolean novo = !arquivo.exists() || arquivo.length() == 0;
+
+        try (PrintWriter pw = new PrintWriter(new FileWriter(arquivo, true))) {
+            if (novo) pw.println(CABECALHO);
+            pw.println(m.getNomeFaixa() + "," + m.getArtista() + "," + m.getAlbum()
+                    + "," + m.getGenero() + "," + m.getAnoLancamento() + "," + m.getData());
+        }
+    }
+
+    /**
+     * Le o CSV e retorna uma lista de Musica (instancias de MusicaDaSemana).
+     *
+     * <p>Ignora o cabecalho, linhas em branco e linhas com dados invalidos.</p>
+     *
+     * @return lista de objetos Musica lidos do arquivo; vazia se o arquivo nao existir
+     * @throws IOException se ocorrer erro de leitura
+     */
+    private List<Musica> lerCSV() throws IOException {
+        List<Musica> lista = new ArrayList<>();
+        File arquivo = new File(ARQUIVO_CSV);
+
+        if (!arquivo.exists()) return lista;
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(arquivo), "UTF-8"))) {
+            String linha;
+            boolean primeiraLinha = true;
+
+            while ((linha = br.readLine()) != null) {
+                if (primeiraLinha) { primeiraLinha = false; continue; }
+                linha = linha.trim();
+                if (linha.isEmpty() || linha.startsWith(",")) continue;
+
+                String[] campos = linha.split(",", -1);
+                if (campos.length < 6) continue;
+
+                try {
+                    String nome    = campos[0].trim();
+                    String artista = campos[1].trim();
+                    String album   = campos[2].trim();
+                    String genero  = campos[3].trim();
+                    int ano        = Integer.parseInt(campos[4].trim());
+                    LocalDate data = LocalDate.parse(campos[5].trim());
+
+                    // Instancia MusicaDaSemana, armazenada como Musica (polimorfismo)
+                    lista.add(new MusicaDaSemana(nome, artista, album, genero, ano, data));
+                } catch (Exception e) {
+                    // linha invalida, ignora
+                }
+            }
+        }
+
+        return lista;
+    }
+
+    /**
+     * Retorna a chave com o maior valor de contagem em um mapa String para Integer.
+     *
+     * @param mapa mapa com chaves e suas contagens
+     * @return chave com maior contagem, ou "-" se o mapa estiver vazio
+     */
+    private String maiorContagem(Map<String, Integer> mapa) {
+        String maior = "-";
+        int max = 0;
+
+        for (String chave : mapa.keySet()) {
+            if (mapa.get(chave) > max) {
+                max = mapa.get(chave);
+                maior = chave;
+            }
+        }
+
+        return maior;
+    }
+} {
+    
+}
