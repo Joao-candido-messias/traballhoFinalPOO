@@ -195,6 +195,10 @@ public class Diario {
     /**
      * Le o CSV e retorna lista de Musica (instancias de MusicaDaSemana).
      *
+     * <p>Apos carregar todas as entradas, marca como favorita (favorita = true)
+     * qualquer faixa cujo nome apareca mais de uma vez na semana corrente
+     * (ultimos 7 dias).</p>
+     *
      * @return lista de objetos Musica; vazia se o arquivo nao existir
      * @throws IOException se ocorrer erro de leitura
      */
@@ -229,6 +233,26 @@ public class Diario {
                 } catch (Exception e) {
                     // linha invalida, ignora
                 }
+            }
+        }
+
+        // Marca como favorita qualquer faixa que se repita na semana corrente
+        LocalDate hoje = LocalDate.now();
+        LocalDate seteDiasAtras = hoje.minusDays(6);
+
+        Map<String, Integer> contagemSemana = new HashMap<>();
+        for (Musica m : lista) {
+            if (!m.getData().isBefore(seteDiasAtras) && !m.getData().isAfter(hoje)) {
+                String chave = m.getNomeFaixa();
+                contagemSemana.put(chave, contagemSemana.getOrDefault(chave, 0) + 1);
+            }
+        }
+
+        for (Musica m : lista) {
+            if (m instanceof MusicaDaSemana) {
+                MusicaDaSemana mds = (MusicaDaSemana) m;
+                Integer contagem = contagemSemana.get(mds.getNomeFaixa());
+                mds.setFavorita(contagem != null && contagem > 1);
             }
         }
 
